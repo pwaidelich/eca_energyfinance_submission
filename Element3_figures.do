@@ -1,32 +1,70 @@
-*** CODE  for a paper entitled "A dynamic analysis of energy financing patterns by public export credit agencies" (submitted) 
+*** CODE  for a paper entitled "Quantifying the shift of public export finance from fossil fuels to renewable energy" (submitted to Nature Communications) 
 
-*** Corresponding author: philipp.censkowsky@unil.ch
+*** Corresponding author: Paul Waidelich (paul.waidelich@gess.ethz.ch)
 
+*** Final figures
 
-*** Final figures 
+*** CODE FOR DEMO ANALYSIS (follow instructions in the READ.ME 
+
+*** BEFORE RUN: --> change the current directory and file path in lines 12-16) and install grc1leg2 as follows:
+
+***  1) type 'search grc1leg2' into the Command in STATA
+***  2) click on "grc1leg2 from http://digital.cgdev.org/doc/stata/MO/Misc" and then on "(click here to install)"
+
 
 clear all 
 
-cd "/Users/pcenskow/Library/CloudStorage/OneDrive-UniversitédeLausanne/ECA paper/Philipp Graphs"
+cd "/Users/pcenskow/Library/CloudStorage/OneDrive-UniversitédeLausanne/ECA paper/Submission graphs"
+
+use "/Users/pcenskow/Library/CloudStorage/OneDrive-UniversitédeLausanne/ECA paper/Final dataset/Repository material (for upload)/TXF_data_censored.dta"
+
+*** file path for original analysis: "/Users/pcenskow/Library/CloudStorage/OneDrive-UniversitédeLausanne/ECA paper/Final paper/datasets/current_working_file_FEB22.dta"
+
+************************************************************************************
+************************************************************************************
+****************************** Figure 1*********************************
+************************************************************************************
+************************************************************************************
 
 
-use "/Users/pcenskow/Library/CloudStorage/OneDrive-UniversitédeLausanne/ECA paper/Final paper/datasets/current_working_file_FEB22.dta"
-
-
-/* Fig 1
-* Figure 1: General trends
-
-* add dealvolume as tot_en 
 
 bys year: egen tot_en_dv = sum(dv_bn)
 bys year: egen tot_eca = sum(v_bn)
 
-
-
 *** Guarantees (SWITCH)
 
-
 preserve
+drop total_*
+drop tech1-tech13
+keep if guarantees == 1
+// regenerate for guarantees only
+bys year: egen total_coal = sum(v/1000) if coal==1
+bys year: egen total_oil = sum(v/1000) if oil==1
+bys year: egen total_gas = sum(v/1000) if gas==1
+bys year: egen total_wind = sum(v/1000) if wind==1
+bys year: egen total_solar = sum(v/1000) if solar==1
+bys year: egen total_hydro = sum(v/1000) if hydro==1
+bys year: egen total_biomass = sum(v/1000) if biomass==1
+bys year: egen total_biogas = sum(v/1000) if biogas==1
+bys year: egen total_waste = sum(v/1000) if waste_to_energy==1
+bys year: egen total_nuclear = sum(v/1000) if nuclear==1
+bys year: egen total_infra = sum(v/1000) if other == 3
+
+forv i = 1(1)13 {
+	bys year: egen tech`i' = sum(v/1000) if tech==`i'
+}
+
+local names Coal_fired Gas_fired Oil_fired Other_or_mixed_fossil Wind Solar Hydro Biogas Biomass Geothermal Other_or_mixed_renewables Waste_to_energy Nuclear
+
+foreach var of varlist tech1-tech13 {
+    local list `list' `var'
+}
+forvalues i=1(1)13 {
+        local name : word `i' of `names'
+        local varname : word `i' of `list'
+        label variable `varname' `name'
+}
+
 	collapse (max) total_coal total_oil total_gas tech4 total_wind total_solar total_hydro total_biomass total_biogas total_waste tech11 total_nuclear tech_fine7 total_infra, by(year)
 	foreach x of varlist total_coal total_oil total_gas tech4 total_wind total_solar total_hydro total_biomass total_biogas total_waste tech11 total_nuclear tech_fine7 total_infra {
 	replace `x' = 0 if(`x' == .) 
@@ -61,6 +99,40 @@ restore
 *** Direct lending (SWITCH)
 
 preserve
+
+drop total_*
+drop tech1-tech13
+keep if direct_lending == 1 
+// regenerate for direct lending only
+
+bys year: egen total_coal = sum(v/1000) if coal==1
+bys year: egen total_oil = sum(v/1000) if oil==1
+bys year: egen total_gas = sum(v/1000) if gas==1
+bys year: egen total_wind = sum(v/1000) if wind==1
+bys year: egen total_solar = sum(v/1000) if solar==1
+bys year: egen total_hydro = sum(v/1000) if hydro==1
+bys year: egen total_biomass = sum(v/1000) if biomass==1
+bys year: egen total_biogas = sum(v/1000) if biogas==1
+bys year: egen total_waste = sum(v/1000) if waste_to_energy==1
+bys year: egen total_nuclear = sum(v/1000) if nuclear==1
+bys year: egen total_infra = sum(v/1000) if other == 3
+
+forv i = 1(1)13 {
+	bys year: egen tech`i' = sum(v/1000) if tech==`i'
+}
+
+local names Coal_fired Gas_fired Oil_fired Other_or_mixed_fossil Wind Solar Hydro Biogas Biomass Geothermal Other_or_mixed_renewables Waste_to_energy Nuclear
+
+foreach var of varlist tech1-tech13 {
+    local list `list' `var'
+}
+forvalues i=1(1)13 {
+        local name : word `i' of `names'
+        local varname : word `i' of `list'
+        label variable `varname' `name'
+}
+
+
 	collapse (max) total_coal total_oil total_gas tech4 total_wind total_solar total_hydro total_biomass total_biogas total_waste tech11 total_nuclear tech_fine7 total_infra, by(year)
 	foreach x of varlist total_coal total_oil total_gas tech4 total_wind total_solar total_hydro total_biomass total_biogas total_waste tech11 total_nuclear tech_fine7 total_infra {
 	replace `x' = 0 if(`x' == .) 
@@ -95,7 +167,7 @@ restore
 
 
 
-* (NO SWITCH) Share RE over all direct lending 
+* Share RE over all direct lending 
 
 bys year: egen tot_en_dl = total(v/1000) if inlist(ecaroleonthedeal, "DFI/MDB direct lender", "ECA direct lender", "Lender")
 bys year: egen tot_re_dl = total(v/1000) if re == 1 & inlist(ecaroleonthedeal, "DFI/MDB direct lender", "ECA direct lender", "Lender")
@@ -103,7 +175,6 @@ bys year: egen tot_re_dl = total(v/1000) if re == 1 & inlist(ecaroleonthedeal, "
 
 bys year: egen tot_en_g = total(v/1000) if inlist(ecaroleonthedeal, "DFI/MDB (guarantor)", "ECA (guarantor)")
 bys year: egen tot_re_g = total(v/1000) if re == 1 & inlist(ecaroleonthedeal, "DFI/MDB (guarantor)", "ECA (guarantor)")
-
 
 
 * Shares RE Guarantees & Direct lending  
@@ -135,17 +206,18 @@ restore
 grc1leg2 guarantees_only.gph directlending_only.gph RE_share.gph, r(3) leg(guarantees_only.gph) pos(3) lr(9) 
 
 
-graph export Fig1_final, as(png) replace
-
-
-*/
+graph export Fig1_final.png, replace
 
 
 
+************************************************************************************
+************************************************************************************
+****************************** Figure 2 *********************************
+************************************************************************************
+************************************************************************************
 
-/* New vars Fig2
 
-
+* New variables 
 
 replace period = 1 if inlist(year, 2013, 2014, 2015)
 replace period = 2 if inlist(year, 2016, 2017, 2018, 2019) 
@@ -247,10 +319,8 @@ label values re_energy_source re_energy_source_labs
 
 
 
-*/
 
-/* Fig 2: Value chains FF by type of energy and period
-
+// Figure 2 Value chains FF by type of energy and period
 
 
 preserve
@@ -381,15 +451,19 @@ restore
 
 grc1leg2 Coal.gph Oil.gph Gas.gph Renewables.gph, r(1) loff graphregion(color(white)) ycom 
 
-graph export, as(png) name("Fig2") quality(100) replace 
-
-// legend code: relabel(1 `""Pre-Paris" "{it:(2013-15)}""' 2 `""Post-Paris" "{it:(2016-19)}""' 3 `""Pandemic" "{it:(2020-21)}""' 4 `""Post-Glasgow" "{it:(2022-23)}""')
-
-*/
+graph export Fig2_final.png, replace 
 
 
 
-/* Fig3: Upper element of the graph  
+************************************************************************************
+************************************************************************************
+****************************** Figure 3 *********************************
+************************************************************************************
+************************************************************************************
+
+
+
+*** Fig3: Upper element of the graph  
 
 gen e3f = 0 
 replace e3f = 1 if inlist(ecacountry, "Belgium", "Denmark", "Finland", "France", "Germany") | ///
@@ -475,7 +549,7 @@ grc1leg2 p1.gph p2.gph p3.gph p4.gph, r(1) pos(6) saving(Fig3_upper, replace)
 
 
 
-/* Fig3: Middle element, non-E3F countries by period 
+*** Figure 3: Middle element, non-E3F countries by period 
 
 /*
 gen e3f = 0 
@@ -704,13 +778,13 @@ grc1leg2 p1.gph p2.gph p3.gph p4.gph ///
 japan_rel.gph korea_rel.gph china_rel.gph all_others_none3f_rel.gph ///
 italy_rel.gph denmark_rel.gph germany_rel.gph all_others_e3f_rel.gph, r(3) loff 
 
-graph export "/Users/pcenskow/Library/CloudStorage/OneDrive-UniversitédeLausanne/ECA paper/Final paper/Figures/Fig 3/Graph.pdf", as(pdf) name("Graph") replace 
+graph export Fig3_final.png, replace
 
 
-*/
 
 
-/* Fig3: Country share over total by group 
+
+/* Additional calculation Figure 3: Country share over total by group 
 
 * Non-E3F
 preserve 
@@ -767,10 +841,14 @@ restore
 */
 
 
+************************************************************************************
+************************************************************************************
+****************************** Figure 4 *********************************
+************************************************************************************
+************************************************************************************
 
-* Fig 4: Financing structure  
 
-* DV_bn 
+* in total deal volume  
 
 preserve 
 gen all_energy = 0 
@@ -807,6 +885,7 @@ marker(6, mcolor(green*0.4)) ///
 marker(7, mcolor(orange*0.8))
 codebook tmddealid
 graph save dealvolumes, replace
+graph export Fig4_1_final.png, replace
 restore 
 
 
@@ -851,10 +930,8 @@ summarize dv if all_energy == 4, d
 summarize dv if all_energy == 5, d
 summarize dv if all_energy == 7, d
 graph save zoom_in_dealvolumes, replace
-
+graph export Fig4_2_final_zoomin.png, replace
 restore 
-
-graph export "/Users/pcenskow/Library/CloudStorage/OneDrive-UniversitédeLausanne/ECA paper/Final paper/Figures/Fig 4/dealvolumes_zoomin.png", as(png) name("Graph") replace
 
 
 *D Tenor by period and energy 
@@ -893,17 +970,10 @@ marker(5, mcolor(green*0.8)) ///
 marker(6, mcolor(green*0.4)) ///
 marker(7, mcolor(orange*0.8)) 
 graph save Tenor, replace
-
+graph export Fig4_3_final.png, replace
 restore 
 
-graph export "/Users/pcenskow/Library/CloudStorage/OneDrive-UniversitédeLausanne/ECA paper/Final paper/Figures/Fig 4/hbar_tenor.png", as(png) name("Graph") replace
 
-
-
-bar(1, col("237 248 251") lp(solid) lw(vthin)) ///
-bar(2, col("179 205 227") lp(solid) lw(vthin)) ///
-bar(3, col("140 150 198") lp(solid) lw(vthin)) ///
-bar(4, col("136 65 157") fi(inten30) lp(solid)
 
 * E Borrower type 
 
@@ -939,10 +1009,8 @@ yla(, angle(0)) legend(order(1 "Special purpose vehicle" 2 "Other private" 3 "Pu
 size(small) symxsize(4) symysize(4) region(lp(blank))) ///
 intensity(*0.7) graphregion(color(white)) ytitle("") 
 graph save bt, replace
+graph export Fig4_4_final.png, replace
 restore 
-
-graph export "/Users/pcenskow/Library/CloudStorage/OneDrive-UniversitédeLausanne/ECA paper/Final paper/Figures/Fig 4/bt_ final final .png", as(png) name("Graph") replace
-
 
 
 * Tranche structure 
@@ -992,20 +1060,10 @@ r(3) ///
 size(small) symxsize(4) symysize(4) region(lp(blank))) ///
 intensity(*0.7) graphregion(color(white)) ytitle("") 
 graph save tranche_type, replace
+graph export Fig4_5_final.png, replace
 tab tranchestructure if fintype == 2
 tab tranchestructure if fintype == 3
 tab tranchestructure if fintype == 4
 restore 
-
-graph export "/Users/pcenskow/Library/CloudStorage/OneDrive-UniversitédeLausanne/ECA paper/Final paper/Figures/Fig 4/tranche_type.png", as(png) name("Graph") replace
-
-
-
-// other private less only 49 tranches or 3.46% --> kick out
-
-
-
-
-*/
 
 

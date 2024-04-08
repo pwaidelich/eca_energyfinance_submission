@@ -1,6 +1,6 @@
-*** CODE  for a paper entitled "A dynamic analysis of energy financing patterns by public export credit agencies" (submitted) 
+*** CODE  for a paper entitled "Quantifying the shift of public export finance from fossil fuels to renewable energy" (submitted to Nature Communications) 
 
-*** Corresponding author: philipp.censkowsky@unil.ch
+*** Corresponding author: Paul Waidelich (paul.waidelich@gess.ethz.ch)
 
 
 
@@ -284,7 +284,7 @@ restore
 
 */
 
-/* Join dataframes retaining the highest amount for each year (Figure 1, G)
+/* Join dataframes retaining the highest amount for each year (Figure 1, Guarantee)
 
 
 clear all
@@ -420,7 +420,7 @@ restore
 
 
 
-/* Join dataframes retaining the highest amount for each year (Figure 1, DL)
+/* Join dataframes retaining the highest amount for each year (Figure 1, Direct Lending)
 
 clear all
 
@@ -545,7 +545,7 @@ restore
 
 */
 
-/* Join dataframes RE share (lower element of the graph)
+/* Join dataframes RE share (lower element of Figure 1)
 
 clear all
 

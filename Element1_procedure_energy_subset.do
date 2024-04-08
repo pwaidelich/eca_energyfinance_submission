@@ -1,9 +1,9 @@
-*** CODE  for a paper entitled "A dynamic analysis of energy financing patterns by public export credit agencies" (submitted) 
+*** CODE  for a paper entitled "Quantifying the shift of public export finance from fossil fuels to renewable energy" (submitted to Nature Communications) 
 
-*** Corresponding author: philipp.censkowsky@unil.ch
+*** Corresponding author: Paul Waidelich (paul.waidelich@gess.ethz.ch)
 
 
-/* Import Excel files and change to STATA files (.dta)
+/* Import original Excel files and change to STATA data files (.dta)
 
 clear all 
 
@@ -24,7 +24,7 @@ save Raw_data_2023_new
 */
 
 
-/* Import and append different datawaves 
+/* Import and append different datawaves (in total two, 2013-2022 and 2023)
 
 clear all
 
@@ -60,18 +60,14 @@ label var ecainvolvementonthedealin "ECA involvement in USD million"
 */
 
 
-/* Screen for additional deals
+/* Screen for additional deals and re-classification
 
 
-************************************************************************************
-************************************************************************************
-***************************** Screen for additional FF deals*********************************
-************************************************************************************
-************************************************************************************
+* All sub-industries in ECA-supported deals were screened with the below code (for space reasons we only provide shipping industry here)
 
-*** We screened all subindustries in the following way (here example 'ships'). All relevant deals were exported to Excel and their relevance for fossil or RET value chains evaluated 'by hand'.
+* All potentially energy-related deals were screened on a case-by-case basis in a separate Excel file (not possible to share since it contains deal-level information)
 
-*** Example: dealsubindustry == Ships 
+* Example code: dealsubindustry == Ships 
 
 gen ships_ff = 0
 replace ships_ff=1 if ///
@@ -137,7 +133,8 @@ strpos(assettype, "fpso") & dealsubindustry == "Ships"
 
 
 
-* remove those deals that were falsely reclassified as ships_ff
+
+/* Remove those deals that were falsely reclassified as ships_ff
 
 * br tmddealid borrower borrowerindustry exporterindustry dealtitle volumein dealindustry dealsubindustry description if ships_ff ==1 & volumein != 0
 
@@ -156,6 +153,7 @@ tmddealid == 19307 | /// LNG-propelled vessels, not LNG-transport vessels
 tmddealid == 19774 | /// container ships
 tmddealid == 20230  // container ships
 
+*/
 
 gen upstream_dredging = 0 
 replace upstream_dredging = 1 if ///
@@ -581,72 +579,6 @@ label values tech_fine technology_fine
 
 
 */
-
-
-/* Check reclassified versus original volumes and deal numbers
-
-
-************************************************************************************
-************************************************************************************
-*****************************RECLASSIFIED VS ORIGINAL*********************************
-************************************************************************************
-************************************************************************************
-
-gen reclass_ff = 0 
-replace reclass_ff = 1 if ///
-ships_ff == 1 | /// 
-dealsubindustry == "Industrial equipment" & ff == 1 | ///  
-dealsubindustry == "Engineering" & ff == 1 | ///  
-dealsubindustry == "Capital equipment" & ff == 1 | ///  
-dealsubindustry == "Ships and Oil rigs" & ff == 1 | ///  
-dealsubindustry == "Conventional power" & ff == 1 | ///  
-dealsubindustry == "Power" & ff == 1 | ///  
-dealsubindustry == "Coal, Coke, Anthracite" & ff == 1 
-
-total volumein if reclass_ff == 1 
-
-total volumein if reclass_ff == 0 & ff == 1
-
-di "Additional reclassified FF =" 34598.6/314969.9
-
-* 11% on top 
-
-total ecainvolvementonthedealin if reclass_ff == 1 
-
-total ecainvolvementonthedealin if reclass_ff == 0 & ff == 1
-
-di "Additional reclassified FF =" 29566/220223
-
-* 13% on top 
-
-
-gen reclass_re = 0
-replace reclass_re = 1 if ///
-tmddealid==2434 | /// add solar deal in conventional power
-tmddealid==2435 | /// add solar deal in conventional power
-tmddealid==2436 | /// add solar deal in conventional power
-tmddealid == 1935 | /// add Wind deal from subcategory 'Power'
-tmddealid == 1938 | /// add Wind deal from subcategory 'Power'
-tmddealid == 11286 | /// add Wind deal from subcategory 'Industrial equipment' to envision group (only do Wind)
-tmddealid == 1940 | /// add Wind deal from subcategory 'Power'
-tmddealid == 1707 // add hydro deal from conventional power
-
-total volumein if reclass_re == 1 
-
-total volumein if reclass_re == 0 & re == 1
-
-di "Additional reclassified RE =" 1168.01/110047 
-
-* 1% on top 
-
-total ecainvolvementonthedealin if reclass_re == 1 
-
-total ecainvolvementonthedealin if reclass_re == 0 & re == 1
-di "Additional reclassified RE =" 357/65213 
-
-
-*/
-
 
 
 ************************************************************************************
