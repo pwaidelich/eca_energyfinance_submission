@@ -1,6 +1,6 @@
-*** CODE  for a paper entitled "A dynamic analysis of energy financing patterns by public export credit agencies" (submitted) 
+*** CODE  for a paper entitled "Quantifying the shift of public export finance from fossil fuels to renewable energy" (submitted to Nature Communications) 
 
-*** Corresponding author: philipp.censkowsky@unil.ch
+*** Corresponding author: Paul Waidelich (paul.waidelich@gess.ethz.ch)
 
 
 clear all 
@@ -9,13 +9,7 @@ cd "/Users/pcenskow/Library/CloudStorage/OneDrive-UniversitédeLausanne/ECA pap
 
 use "/Users/pcenskow/Library/CloudStorage/OneDrive-UniversitédeLausanne/ECA paper/Final dataset/TXF_data_all_energy_only.dta"
 
-************************************************************************************
-************************************************************************************
-*****************************GRAPHS*********************************
-************************************************************************************
-************************************************************************************
-
-
+/* Change key variables from string to numeric (e.g., Year)
 * re-do year variable numeric 
 gen year = 0 
 replace year = 2013 if closingyear == "2013"
@@ -34,7 +28,9 @@ replace year = 2023 if closingyear == "2023"
 
 destring tenor, gen(tenor_num) dpcomma
 
-* create deflated eca or deal volume variables
+*/
+
+/* Create deflated eca or deal volume variables
 
 clonevar v = ecainvolvementonthedealin
 
@@ -66,9 +62,9 @@ gen v_bn = v/1000
 
 gen dv_bn = dv/1000
 
+*/
 
-
-* remove non-official ECAs 
+/* Remove non-official ECAs 
 
 gen no_official_eca = 0 
 replace no_official_eca = 1 if inlist(ecaname, ///
@@ -104,7 +100,11 @@ total v_bn if no_official_eca == 1 & ff == 1 // 15 billion, or 4.3% of the total
 
 drop if no_official_eca == 1
 
-* SWITCH below: remove domestic financing 
+
+*/
+
+
+/* SWITCHES: domestic financing, and financial instrument  
 
 gen region = 0 
 replace region = 1 if ecacountry==dealcountry // domestic 
@@ -132,36 +132,10 @@ gen guarantees = 0
 replace guarantees = 1 if ecaroleonthedeal == "DFI/MDB (guarantor)" | ///
 ecaroleonthedeal == "ECA (guarantor)"
 
-
-
-*** SWITCHES 
-
-
-/*
-**** SWITCHES applied
-
-drop if year == 2023
-
-clonevar v = ecainvolvementonthedealin 
-
-*Only E3F countries:
-keep if inlist(ecacountry, "Belgium", "Denmark", "Finland", "France", "Germany") | ///
-inlist(ecacountry, "Italy", "Netherlands", "Spain", "Sweden", "United Kingdom")
-
-*Only E3F reporting period:
-keep if inlist(year, 2015, 2016, 2017, 2018, 2019, 2020)
-
-*Only E3F tenor period
-keep if tenor_num > 1
-
 */
 
-*
-**** ALL SWITCHES:
 
-
-
-/*
+/* List of switches 
 
 
 *Guarantees only:
@@ -215,8 +189,8 @@ keep if inlist(ecacountry, "Japan", "Korea", "China", "United States", "Norway")
 
 */
 
-* Total energy finance (FF/RE/Other) by ecacountry to identify the Top 10 ECAs
-bys ecacountry: egen tot_en_country = sum(v/1000)
+
+/* Generate additional variables 
 
 * Energy source variable 
 
@@ -246,37 +220,9 @@ label define b_type 1 "SPV" 2 "Private company" 3 "Government owned company" ///
 label values borrowertype2 b_type
 
 
-* Type of financing variable 
-
-gen typeoffinancing2 = 0 
-replace typeoffinancing2 = 1 if typeoffinancing == "New finance"
-replace typeoffinancing2 = 2 if typeoffinancing == "Refinancing"
-
-
-label define f_type 1 "New finance" 2 "Refinancing"
-
-label values typeoffinancing2 f_type
-
-
-
-
-* Deal labels variable 
-
-gen deallabel = 0 
-replace deallabel = 1 if tmddealid == 6091 // Yamal LNG
-replace deallabel = 2 if tmddealid == 12641 //  Mozambique LNG Area 1
-replace deallabel = 3 if tmddealid == 13066 //  Dogger Bank Wind Farm
-
-label define dlabels 1 "Yamal LNG" 2 "Mozambique LNG Area 1" 3 "Doggerbank Windfarm"
-
-label values deallabel dlabels
-
-
-
 * Unique number of tranches
 
 unique uniquetrancheid, by(tmddealid) gen(tranche_number)
-
 
 
 * Periods 
@@ -347,9 +293,77 @@ bys ecacountry: egen rel_other_p`i' = mean(tot_en_p`i'/tot_en_period) if other !
 }
 
 
-/*
+*/
 
-For Figure 3b
+/* Generate specific variables for Figure 1
+* energy source by year 
+
+bys year: egen total_coal = sum(v/1000) if coal==1
+bys year: egen total_oil = sum(v/1000) if oil==1
+bys year: egen total_gas = sum(v/1000) if gas==1
+bys year: egen total_wind = sum(v/1000) if wind==1
+bys year: egen total_solar = sum(v/1000) if solar==1
+bys year: egen total_hydro = sum(v/1000) if hydro==1
+bys year: egen total_biomass = sum(v/1000) if biomass==1
+bys year: egen total_biogas = sum(v/1000) if biogas==1
+bys year: egen total_waste = sum(v/1000) if waste_to_energy==1
+bys year: egen total_nuclear = sum(v/1000) if nuclear==1
+bys year: egen total_infra = sum(v/1000) if other == 3
+
+
+*/
+
+/* Generate specific variables for Figure 2
+
+* value chain by year and type of fuel 
+
+forv i = 1(1)5 {
+	bys year: egen v_c`i'_coal = sum(v/1000) if v_c==`i' & coal == 1 
+}
+
+local names Upstream Midstream Downstream Power_generation Electricity_infrastructure
+foreach var of varlist v_c1_coal-v_c5_coal {
+    local list `list' `var'
+}
+forvalues i=1(1)5 {
+        local name : word `i' of `names'
+        local varname : word `i' of `list'
+        label variable `varname' `name'
+}
+
+forv i = 1(1)5 {
+	bys year: egen v_c`i'_oil = sum(v/1000) if v_c==`i' & oil == 1 
+}
+
+local names Upstream Midstream Downstream Power_generation Electricity_infrastructure
+foreach var of varlist v_c1_oil-v_c5_oil {
+    local list `list' `var'
+}
+forvalues i=1(1)5 {
+        local name : word `i' of `names'
+        local varname : word `i' of `list'
+        label variable `varname' `name'
+}
+
+forv i = 1(1)5 {
+	bys year: egen v_c`i'_gas = sum(v/1000) if v_c==`i' & gas == 1 
+}
+
+local names Upstream Midstream Downstream Power_generation Electricity_infrastructure
+foreach var of varlist v_c1_oil-v_c5_gas {
+    local list `list' `var'
+}
+forvalues i=1(1)5 {
+        local name : word `i' of `names'
+        local varname : word `i' of `list'
+        label variable `varname' `name'
+}
+
+
+
+*/
+
+/* Generate specific variables for Figure 3 
 
 
 * Add a country 'All_others'
@@ -397,12 +411,7 @@ bys ecacountry2: egen rel_other_p`i' = mean(tot_en_p`i'/tot_en_period) if other 
 }
 
 
-*/
-
-
-
-/*
-Identification of Top 10 Energy finance countries 
+* Identification of Top 10 Energy finance countries
 
 collapse (max) tot_en_country, by(ecacountry)
 
@@ -410,66 +419,10 @@ gsort -tot_en_country
 
 keep in 1/10
 list, clean noobs
+
 */
 
-* energy source by year 
-
-bys year: egen total_coal = sum(v/1000) if coal==1
-bys year: egen total_oil = sum(v/1000) if oil==1
-bys year: egen total_gas = sum(v/1000) if gas==1
-bys year: egen total_wind = sum(v/1000) if wind==1
-bys year: egen total_solar = sum(v/1000) if solar==1
-bys year: egen total_hydro = sum(v/1000) if hydro==1
-bys year: egen total_biomass = sum(v/1000) if biomass==1
-bys year: egen total_biogas = sum(v/1000) if biogas==1
-bys year: egen total_waste = sum(v/1000) if waste_to_energy==1
-bys year: egen total_nuclear = sum(v/1000) if nuclear==1
-bys year: egen total_infra = sum(v/1000) if other == 3
-
-* value chain by year and type of fuel 
-
-forv i = 1(1)5 {
-	bys year: egen v_c`i'_coal = sum(v/1000) if v_c==`i' & coal == 1 
-}
-
-local names Upstream Midstream Downstream Power_generation Electricity_infrastructure
-foreach var of varlist v_c1_coal-v_c5_coal {
-    local list `list' `var'
-}
-forvalues i=1(1)5 {
-        local name : word `i' of `names'
-        local varname : word `i' of `list'
-        label variable `varname' `name'
-}
-
-forv i = 1(1)5 {
-	bys year: egen v_c`i'_oil = sum(v/1000) if v_c==`i' & oil == 1 
-}
-
-local names Upstream Midstream Downstream Power_generation Electricity_infrastructure
-foreach var of varlist v_c1_oil-v_c5_oil {
-    local list `list' `var'
-}
-forvalues i=1(1)5 {
-        local name : word `i' of `names'
-        local varname : word `i' of `list'
-        label variable `varname' `name'
-}
-
-forv i = 1(1)5 {
-	bys year: egen v_c`i'_gas = sum(v/1000) if v_c==`i' & gas == 1 
-}
-
-local names Upstream Midstream Downstream Power_generation Electricity_infrastructure
-foreach var of varlist v_c1_oil-v_c5_gas {
-    local list `list' `var'
-}
-forvalues i=1(1)5 {
-        local name : word `i' of `names'
-        local varname : word `i' of `list'
-        label variable `varname' `name'
-}
-
+/* Generate specific variables for Figure 4
 
 * By type of borrower 
 
@@ -538,7 +491,12 @@ forvalues i=1(1)2 {
 
 
 
-/*
+
+*/
+
+
+
+/* Preliminary checks
 bys ecacountry (period): egen tot_en = sum(v/1000)  
 bys ecacountry (period): egen tot_ff = sum(v/1000) if ff == 1
 bys ecacountry (period): egen tot_re = sum(v/1000) if re == 1
@@ -588,31 +546,7 @@ bys ecacountry: egen tot_other_p`i' = sum(v/1000) if other != 0 & p`i' == 1
 
 
 
-
-
-* Total energy finance activity by period 
-
-
-
-
-/*
- 
-forv i = 1(1)3 {
-     gen other_`i' = (tot_en_p`i'/tot_en_all_p`i') if !inlist(ecacountry, ///
-	 "United Kingdom", "United States", "Korea" "Japan" "Italy" "Denmark" "Germany" "China" "Spain" "Norway")
- }
-
-
-
-
-preserve
-collapse (max) tot_en_p1 tot_en_p2 tot_en_p3, over(ecacountry) 
-list, clean noobs
-restore
-
-graph bar tot_en_p1 tot_en_p2 tot_en_p3, over(ecacountry) over(other_ecacountry) (percentage)
-
-*/
+/* Generate specific variables for technologies coarse and fine 
 
 * technology coarse by year 
 
@@ -650,6 +584,8 @@ forvalues i=1(1)20 {
 }
 
 
+*/
+
 save "/Users/pcenskow/Library/CloudStorage/OneDrive-UniversitédeLausanne/ECA paper/Final paper/datasets/current_working_file_FEB22.dta", replace
 
-
+*/ 
